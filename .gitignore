@@ -1,0 +1,10 @@
+storage
+bin
+channels.json
+download-result.json
+temp_podbbang.json
+
+.env
+.env.local
+node_modules
+.vercel

@@ -1,0 +1,36 @@
+{
+  "name": "yt-rss-maker",
+  "version": "1.0.0",
+  "description": "YouTube to RSS feed converter with audio extraction",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "concurrently \"node server.js\" \"cd frontend && npm run dev\"",
+    "server": "node server.js",
+    "frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm install && npm run build",
+    "vercel-build": "npm run build"
+  },
+  "keywords": [
+    "youtube",
+    "rss",
+    "podcast",
+    "audio"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@distube/yt-dlp": "^2.0.1",
+    "@supabase/supabase-js": "^2.81.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "node-cron": "^4.2.1",
+    "rss": "^1.2.2",
+    "yt-dlp-wrap": "^2.3.12"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
