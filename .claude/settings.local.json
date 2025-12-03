@@ -37,7 +37,9 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git filter-branch:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
