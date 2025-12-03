@@ -236,6 +236,12 @@ app.get('/rss/:channelId', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`YouTube RSS Maker running on ${BASE_URL}`);
-});
+// Vercel 배포용 export
+export default app;
+
+// 로컬 개발용 서버 시작
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`YouTube RSS Maker running on ${BASE_URL}`);
+  });
+}
