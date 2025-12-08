@@ -5,9 +5,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "concurrently \"node server.js\" \"cd frontend && npm run dev\"",
-    "server": "node server.js",
+    "start": "node --no-warnings start.js",
+    "dev": "concurrently \"node start.js\" \"cd frontend && npm run dev\"",
+    "server": "node start.js",
     "frontend": "cd frontend && npm run dev",
     "build": "cd frontend && npm install && npm run build",
     "vercel-build": "npm run build"

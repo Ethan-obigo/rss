@@ -1,3 +1,5 @@
+console.log('--- SERVER.JS LOADED ---');
+
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -5,9 +7,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import channelDB from './lib/channelDB.js';
-import { getChannelInfo, getChannelVideos, downloadAudio } from './lib/ytDownloader.js';
+import {
+  getChannelInfo,
+  getChannelVideos,
+  downloadAudio,
+} from './lib/ytDownloader.js';
 import { generateRSS } from './lib/rssGenerator.js';
-import { fetchPodbbangChannel, updatePodbbangChannel } from './lib/podbbangDownloader.js';
+import {
+  fetchPodbbangChannel,
+  updatePodbbangChannel,
+} from './lib/podbbangDownloader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,7 +45,7 @@ app.get('/api/health', async (req, res) => {
       status: 'ok',
       message: 'YouTube RSS Maker is running',
       audioDir: AUDIO_DIR,
-      channels: channels.length
+      channels: channels.length,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -44,6 +53,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 app.get('/api/channels', async (req, res) => {
+  console.log('RSS: Channel not found:');
   try {
     const channels = await channelDB.getAllChannels();
     res.json({ channels });
@@ -70,7 +80,7 @@ app.post('/api/channel', async (req, res) => {
     const channel = await channelDB.addChannel({
       id: channelInfo.id,
       title: channelInfo.title,
-      url: channelUrl
+      url: channelUrl,
     });
 
     await channelDB.updateChannelVideos(channelInfo.id, videos);
@@ -80,7 +90,6 @@ app.post('/api/channel', async (req, res) => {
       channel,
       videos: videos.length,
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -103,12 +112,16 @@ const downloadHandler = async (req, res) => {
         const audioPath = await downloadAudio(video.url, video.id);
         results.push({ videoId: video.id, success: true, path: audioPath });
       } catch (error) {
-        results.push({ videoId: video.id, success: false, error: error.message });
+        results.push({
+          videoId: video.id,
+          success: false,
+          error: error.message,
+        });
       }
     }
 
-    const updatedVideos = channel.videos.map(video => {
-      const result = results.find(r => r.videoId === video.id && r.success);
+    const updatedVideos = channel.videos.map((video) => {
+      const result = results.find((r) => r.videoId === video.id && r.success);
       if (result) {
         return { ...video, audioPath: result.path };
       }
@@ -119,11 +132,10 @@ const downloadHandler = async (req, res) => {
 
     res.json({
       success: true,
-      downloaded: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
-      results
+      downloaded: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+      results,
     });
-
   } catch (error) {
     console.error('Error downloading audio:', error);
     res.status(500).json({ error: error.message });
@@ -161,13 +173,14 @@ app.post('/api/podbbang/channel', async (req, res) => {
     const { channelInfo, episodes } = await fetchPodbbangChannel(channelId);
 
     // 채널 DB에 추가
-    const channel = await channelDB.addChannel({
+    const channelData = {
+      ...channelInfo,
       id: `podbbang_${channelId}`,
-      title: channelInfo.title,
-      url: channelInfo.url,
       type: 'podbbang',
-      originalId: channelId
-    });
+      originalId: channelId,
+    };
+
+    const channel = await channelDB.addChannel(channelData);
 
     await channelDB.updateChannelVideos(`podbbang_${channelId}`, episodes);
 
@@ -176,7 +189,6 @@ app.post('/api/podbbang/channel', async (req, res) => {
       channel,
       episodes: episodes.length,
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -199,9 +211,8 @@ app.post('/api/podbbang/update/:channelId', async (req, res) => {
 
     res.json({
       success: true,
-      updated: episodes.length
+      updated: episodes.length,
     });
-
   } catch (error) {
     console.error('Error updating Podbbang channel:', error);
     res.status(500).json({ error: error.message });
@@ -215,6 +226,7 @@ app.get('/rss/:channelId', async (req, res) => {
     const channel = await channelDB.getChannel(channelId);
 
     if (!channel) {
+      console.error('RSS: Channel not found:', channelId);
       return res.status(404).send('Channel not found');
     }
 
@@ -222,8 +234,17 @@ app.get('/rss/:channelId', async (req, res) => {
       {
         id: channel.id,
         title: channel.title,
-        description: `RSS feed for ${channel.title}`,
-        url: channel.url
+        description:
+          channel.description ||
+          channel.summary ||
+          `RSS feed for ${channel.title}`,
+        summary: channel.summary || channel.description,
+        url: channel.url,
+        thumbnail: channel.thumbnail,
+        author: channel.author,
+        copyright: channel.copyright,
+        owner: channel.owner,
+        language: channel.language,
       },
       channel.videos,
       BASE_URL
@@ -232,16 +253,13 @@ app.get('/rss/:channelId', async (req, res) => {
     res.set('Content-Type', 'application/rss+xml');
     res.send(rssXML);
   } catch (error) {
-    res.status(500).send('Error generating RSS feed');
+    console.error('Error generating RSS feed:', error);
+    res
+      .status(500)
+      .send(
+        `Error generating RSS feed: ${error.message}. Stack: ${error.stack}`
+      );
   }
 });
 
-// Vercel 배포용 export
 export default app;
-
-// 로컬 개발용 서버 시작
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`YouTube RSS Maker running on ${BASE_URL}`);
-  });
-}
