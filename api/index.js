@@ -146,6 +146,13 @@ app.post('/api/podbbang/channel', async (req, res) => {
       id: `podbbang_${channelId}`,
       title: channelInfo.title,
       url: channelInfo.url,
+      description: channelInfo.description,
+      summary: channelInfo.summary,
+      thumbnail: channelInfo.thumbnail,
+      author: channelInfo.author,
+      copyright: channelInfo.copyright,
+      owner: channelInfo.owner,
+      language: channelInfo.language,
       type: 'podbbang',
       originalId: channelId
     });
@@ -202,8 +209,14 @@ app.get('/rss/:channelId', async (req, res) => {
       {
         id: channel.id,
         title: channel.title,
-        description: `RSS feed for ${channel.title}`,
-        url: channel.url
+        description: channel.description || `RSS feed for ${channel.title}`,
+        summary: channel.summary,
+        url: channel.url,
+        thumbnail: channel.thumbnail,
+        author: channel.author,
+        copyright: channel.copyright,
+        owner: channel.owner,
+        language: channel.language
       },
       channel.videos,
       BASE_URL
