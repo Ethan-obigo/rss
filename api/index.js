@@ -5,6 +5,7 @@ import channelDB from '../lib/channelDB.js';
 import { getChannelInfo, getChannelVideos, downloadAudio } from '../lib/ytDownloader.js';
 import { generateRSS } from '../lib/rssGenerator.js';
 import { fetchPodbbangChannel, updatePodbbangChannel } from '../lib/podbbangDownloader.js';
+import { fetchSpotifyShow, updateSpotifyShow } from '../lib/spotifyDownloader.js';
 
 const app = express();
 const BASE_URL = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
@@ -191,6 +192,70 @@ app.post('/api/podbbang/update/:channelId', async (req, res) => {
 
   } catch (error) {
     console.error('Error updating Podbbang channel:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/spotify/show', async (req, res) => {
+  const { showUrl } = req.body;
+
+  if (!showUrl) {
+    return res.status(400).json({ error: 'showUrl is required' });
+  }
+
+  try {
+    const { channelInfo, episodes } = await fetchSpotifyShow(showUrl);
+
+    const channel = await channelDB.addChannel({
+      id: `spotify_${channelInfo.id}`,
+      title: channelInfo.title,
+      url: channelInfo.url,
+      description: channelInfo.description,
+      summary: channelInfo.summary,
+      thumbnail: channelInfo.thumbnail,
+      author: channelInfo.author,
+      copyright: channelInfo.copyright,
+      owner: channelInfo.owner,
+      language: channelInfo.language,
+      type: 'spotify',
+      originalId: channelInfo.id
+    });
+
+    await channelDB.updateChannelVideos(`spotify_${channelInfo.id}`, episodes);
+
+    res.json({
+      success: true,
+      channel,
+      episodes: episodes.length,
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/spotify/update/:showId', async (req, res) => {
+  const { showId } = req.params;
+  const fullChannelId = `spotify_${showId}`;
+
+  try {
+    const channel = await channelDB.getChannel(fullChannelId);
+
+    if (!channel) {
+      return res.status(404).json({ error: '채널이 존재하지 않습니다.' });
+    }
+
+    const showUrl = `https://open.spotify.com/show/${showId}`;
+    const episodes = await updateSpotifyShow(showUrl);
+    await channelDB.updateChannelVideos(fullChannelId, episodes);
+
+    res.json({
+      success: true,
+      updated: episodes.length
+    });
+
+  } catch (error) {
+    console.error('Error updating Spotify show:', error);
     res.status(500).json({ error: error.message });
   }
 });

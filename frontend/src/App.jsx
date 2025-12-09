@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { getChannels, addChannel, addPodbbangChannel, downloadChannel, deleteChannel, getRssUrl } from './api'
+import { getChannels, addChannel, addPodbbangChannel, addSpotifyShow, downloadChannel, deleteChannel, getRssUrl } from './api'
 
 function App() {
   const [channels, setChannels] = useState([])
   const [channelUrl, setChannelUrl] = useState('')
   const [podbbangId, setPodbbangId] = useState('')
+  const [spotifyUrl, setSpotifyUrl] = useState('')
   const [limit, setLimit] = useState(10)
   const [loading, setLoading] = useState(false)
   const [youtubeError, setYoutubeError] = useState('')
   const [podbbangError, setPodbbangError] = useState('')
+  const [spotifyError, setSpotifyError] = useState('')
   const [downloadingChannels, setDownloadingChannels] = useState(new Set())
 
   useEffect(() => {
@@ -66,6 +68,26 @@ function App() {
     }
   }
 
+  async function handleAddSpotify(e) {
+    e.preventDefault()
+    setLoading(true)
+    setSpotifyError('')
+
+    try {
+      const result = await addSpotifyShow(spotifyUrl)
+      if (result.success) {
+        await loadChannels()
+        setSpotifyUrl('')
+      } else {
+        setSpotifyError(result.error || 'Failed to add Spotify show')
+      }
+    } catch (err) {
+      setSpotifyError(err.message || 'Failed to add Spotify show')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleDownload(channelId) {
     setDownloadingChannels(prev => new Set(prev).add(channelId))
 
@@ -115,7 +137,7 @@ function App() {
     <div className="app">
       <header>
         <h1>RSS Maker</h1>
-        <p>Convert YouTube and Podbbang to RSS feeds</p>
+        <p>Convert YouTube, Podbbang, and Spotify to RSS feeds</p>
       </header>
 
       <main>
@@ -168,6 +190,26 @@ function App() {
           {podbbangError && <div className="error">{podbbangError}</div>}
         </section>
 
+        <section className="add-channel">
+          <h2>Add Spotify Show</h2>
+          <form onSubmit={handleAddSpotify}>
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="https://open.spotify.com/show/..."
+                value={spotifyUrl}
+                onChange={(e) => setSpotifyUrl(e.target.value)}
+                required
+                disabled={loading}
+              />
+              <button type="submit" disabled={loading}>
+                {loading ? 'Adding...' : 'Add'}
+              </button>
+            </div>
+          </form>
+          {spotifyError && <div className="error">{spotifyError}</div>}
+        </section>
+
         <section className="channels">
           <h2>Channels ({channels.length})</h2>
           {channels.length === 0 ? (
@@ -179,6 +221,7 @@ function App() {
                   <div className="channel-info">
                     <h3>
                       {channel.type === 'podbbang' && <span className="platform-badge podbbang">Podbbang</span>}
+                      {channel.type === 'spotify' && <span className="platform-badge spotify">Spotify</span>}
                       {(!channel.type || channel.type === 'youtube') && <span className="platform-badge youtube">YouTube</span>}
                       {channel.title}
                     </h3>

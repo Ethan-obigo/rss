@@ -17,6 +17,10 @@ import {
   fetchPodbbangChannel,
   updatePodbbangChannel,
 } from './lib/podbbangDownloader.js';
+import {
+  fetchSpotifyShow,
+  updateSpotifyShow,
+} from './lib/spotifyDownloader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -215,6 +219,63 @@ app.post('/api/podbbang/update/:channelId', async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating Podbbang channel:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 스포티파이 쇼 추가
+app.post('/api/spotify/show', async (req, res) => {
+  const { showUrl } = req.body;
+
+  if (!showUrl) {
+    return res.status(400).json({ error: 'showUrl is required' });
+  }
+
+  try {
+    const { channelInfo, episodes } = await fetchSpotifyShow(showUrl);
+
+    const channelData = {
+      ...channelInfo,
+      id: `spotify_${channelInfo.id}`,
+      type: 'spotify',
+      originalId: channelInfo.id,
+    };
+
+    const channel = await channelDB.addChannel(channelData);
+    await channelDB.updateChannelVideos(`spotify_${channelInfo.id}`, episodes);
+
+    res.json({
+      success: true,
+      channel,
+      episodes: episodes.length,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 스포티파이 쇼 업데이트
+app.post('/api/spotify/update/:showId', async (req, res) => {
+  const { showId } = req.params;
+  const fullChannelId = `spotify_${showId}`;
+
+  try {
+    const channel = await channelDB.getChannel(fullChannelId);
+
+    if (!channel) {
+      return res.status(404).json({ error: '채널이 존재하지 않습니다.' });
+    }
+
+    const showUrl = `https://open.spotify.com/show/${showId}`;
+    const episodes = await updateSpotifyShow(showUrl);
+    await channelDB.updateChannelVideos(fullChannelId, episodes);
+
+    res.json({
+      success: true,
+      updated: episodes.length,
+    });
+  } catch (error) {
+    console.error('Error updating Spotify show:', error);
     res.status(500).json({ error: error.message });
   }
 });

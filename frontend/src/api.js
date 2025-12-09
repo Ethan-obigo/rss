@@ -40,6 +40,17 @@ export async function addPodbbangChannel(channelId) {
   return response.json();
 }
 
+export async function addSpotifyShow(showUrl) {
+  const response = await fetch(`${API_BASE}/spotify/show`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ showUrl }),
+  });
+  return response.json();
+}
+
 export function getRssUrl(channelId) {
   return `${window.location.origin}/rss/${channelId}`;
 }

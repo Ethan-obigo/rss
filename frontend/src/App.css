@@ -183,6 +183,11 @@ h2 {
   color: #fff;
 }
 
+.platform-badge.spotify {
+  background: #1db954;
+  color: #000;
+}
+
 .channel-url {
   font-size: 13px;
   color: #666;
