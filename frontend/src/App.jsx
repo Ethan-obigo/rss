@@ -7,7 +7,7 @@ function App() {
   const [channelUrl, setChannelUrl] = useState('')
   const [podbbangId, setPodbbangId] = useState('')
   const [spotifyUrl, setSpotifyUrl] = useState('')
-  const [limit, setLimit] = useState(10)
+  const limit = 0 // 전체 영상 가져오기
   const [loading, setLoading] = useState(false)
   const [youtubeError, setYoutubeError] = useState('')
   const [podbbangError, setPodbbangError] = useState('')
@@ -37,12 +37,11 @@ function App() {
       if (result.success) {
         await loadChannels()
         setChannelUrl('')
-        setLimit(10)
       } else {
-        setYoutubeError(result.error || 'Failed to add channel')
+        setYoutubeError(result.error || '채널 추가 실패')
       }
     } catch (err) {
-      setYoutubeError(err.message || 'Failed to add channel')
+      setYoutubeError(err.message || '채널 추가 실패')
     } finally {
       setLoading(false)
     }
@@ -54,15 +53,33 @@ function App() {
     setPodbbangError('')
 
     try {
-      const result = await addPodbbangChannel(podbbangId)
+      // URL에서 채널 ID 추출 (숫자만 추출)
+      let channelId = podbbangId.trim()
+
+      // URL 형식인 경우 ID만 추출
+      const urlMatch = channelId.match(/channels\/(\d+)/)
+      if (urlMatch) {
+        channelId = urlMatch[1]
+      } else {
+        // 숫자만 남기기
+        channelId = channelId.replace(/\D/g, '')
+      }
+
+      if (!channelId) {
+        setPodbbangError('유효한 채널 ID 또는 URL을 입력해주세요')
+        setLoading(false)
+        return
+      }
+
+      const result = await addPodbbangChannel(channelId)
       if (result.success) {
         await loadChannels()
         setPodbbangId('')
       } else {
-        setPodbbangError(result.error || 'Failed to add Podbbang channel')
+        setPodbbangError(result.error || '팟빵 채널 추가 실패')
       }
     } catch (err) {
-      setPodbbangError(err.message || 'Failed to add Podbbang channel')
+      setPodbbangError(err.message || '팟빵 채널 추가 실패')
     } finally {
       setLoading(false)
     }
@@ -79,10 +96,10 @@ function App() {
         await loadChannels()
         setSpotifyUrl('')
       } else {
-        setSpotifyError(result.error || 'Failed to add Spotify show')
+        setSpotifyError(result.error || 'Spotify 쇼 추가 실패')
       }
     } catch (err) {
-      setSpotifyError(err.message || 'Failed to add Spotify show')
+      setSpotifyError(err.message || 'Spotify 쇼 추가 실패')
     } finally {
       setLoading(false)
     }
@@ -94,13 +111,13 @@ function App() {
     try {
       const result = await downloadChannel(channelId)
       if (result.success) {
-        alert(`Downloaded ${result.downloaded} videos`)
+        alert(`${result.downloaded}개 영상 다운로드 완료`)
         await loadChannels()
       } else {
-        alert('Download failed: ' + (result.error || 'Unknown error'))
+        alert('다운로드 실패: ' + (result.error || '알 수 없는 오류'))
       }
     } catch (err) {
-      alert('Download failed: ' + err.message)
+      alert('다운로드 실패: ' + err.message)
     } finally {
       setDownloadingChannels(prev => {
         const next = new Set(prev)
@@ -113,11 +130,11 @@ function App() {
   function copyRssUrl(channelId) {
     const url = getRssUrl(channelId)
     navigator.clipboard.writeText(url)
-    alert('RSS URL copied')
+    alert('RSS URL이 복사되었습니다')
   }
 
   async function handleDeleteChannel(channelId, channelTitle) {
-    if (!confirm(`Delete "${channelTitle}"?`)) {
+    if (!confirm(`"${channelTitle}"을(를) 삭제하시겠습니까?`)) {
       return
     }
 
@@ -126,64 +143,56 @@ function App() {
       if (result.success) {
         await loadChannels()
       } else {
-        alert('Delete failed: ' + (result.error || 'Unknown error'))
+        alert('삭제 실패: ' + (result.error || '알 수 없는 오류'))
       }
     } catch (err) {
-      alert('Delete failed: ' + err.message)
+      alert('삭제 실패: ' + err.message)
     }
   }
 
   return (
     <div className="app">
       <header>
-        <h1>RSS Maker</h1>
-        <p>Convert YouTube, Podbbang, and Spotify to RSS feeds</p>
+        <h1>RSS 피드 생성기</h1>
+        <p>YouTube, 팟빵, Spotify를 RSS 피드로 변환</p>
       </header>
 
       <main>
         <section className="add-channel">
-          <h2>Add YouTube Channel</h2>
+          <h2>YouTube 채널/플레이리스트 추가</h2>
           <form onSubmit={handleAddChannel}>
             <div className="form-group">
               <input
                 type="text"
-                placeholder="youtube.com/@channel"
+                placeholder="youtube.com/@채널명 또는 youtube.com/playlist?list=..."
                 value={channelUrl}
                 onChange={(e) => setChannelUrl(e.target.value)}
                 required
                 disabled={loading}
               />
-              <input
-                type="number"
-                placeholder="Limit"
-                value={limit}
-                onChange={(e) => setLimit(Number(e.target.value))}
-                min="1"
-                max="50"
-                disabled={loading}
-              />
               <button type="submit" disabled={loading}>
-                {loading ? 'Adding...' : 'Add'}
+                {loading ? '추가 중...' : '추가'}
               </button>
             </div>
           </form>
+          <p className="notice">※ 현재 배포 환경에서는 미지원됩니다.</p>
           {youtubeError && <div className="error">{youtubeError}</div>}
         </section>
 
         <section className="add-channel">
-          <h2>Add Podbbang Channel</h2>
+          <h2>팟빵 채널 추가</h2>
           <form onSubmit={handleAddPodbbang}>
             <div className="form-group">
               <input
                 type="text"
-                placeholder="Channel ID (e.g. 1781651)"
+                placeholder="podbbang.com/channels/1781651 또는 채널 ID"
                 value={podbbangId}
                 onChange={(e) => setPodbbangId(e.target.value)}
                 required
                 disabled={loading}
               />
               <button type="submit" disabled={loading}>
-                {loading ? 'Adding...' : 'Add'}
+                {loading ? '추가 중...' : '추가'}
               </button>
             </div>
           </form>
@@ -191,7 +200,7 @@ function App() {
         </section>
 
         <section className="add-channel">
-          <h2>Add Spotify Show</h2>
+          <h2>Spotify 쇼 추가</h2>
           <form onSubmit={handleAddSpotify}>
             <div className="form-group">
               <input
@@ -203,7 +212,7 @@ function App() {
                 disabled={loading}
               />
               <button type="submit" disabled={loading}>
-                {loading ? 'Adding...' : 'Add'}
+                {loading ? '추가 중...' : '추가'}
               </button>
             </div>
           </form>
@@ -211,40 +220,41 @@ function App() {
         </section>
 
         <section className="channels">
-          <h2>Channels ({channels.length})</h2>
+          <h2>채널 목록 ({channels.length})</h2>
           {channels.length === 0 ? (
-            <p className="empty">No channels yet</p>
+            <p className="empty">아직 추가된 채널이 없습니다</p>
           ) : (
             <div className="channel-list">
               {channels.map((channel) => (
                 <div key={channel.id} className="channel-card">
                   <div className="channel-info">
                     <h3>
-                      {channel.type === 'podbbang' && <span className="platform-badge podbbang">Podbbang</span>}
+                      {channel.type === 'podbbang' && <span className="platform-badge podbbang">팟빵</span>}
                       {channel.type === 'spotify' && <span className="platform-badge spotify">Spotify</span>}
-                      {(!channel.type || channel.type === 'youtube') && <span className="platform-badge youtube">YouTube</span>}
+                      {channel.type === 'playlist' && <span className="platform-badge youtube">플레이리스트</span>}
+                      {(!channel.type || channel.type === 'youtube' || channel.type === 'channel') && <span className="platform-badge youtube">YouTube</span>}
                       {channel.title}
                     </h3>
                     <p className="channel-url">{channel.url}</p>
                     <p className="channel-meta">
-                      {channel.videos.length} episodes · Added {new Date(channel.addedAt).toLocaleDateString()}
+                      {channel.videos.length}개 에피소드 · {new Date(channel.addedAt).toLocaleDateString('ko-KR')} 추가
                     </p>
                   </div>
                   <div className="channel-actions">
-                    {(!channel.type || channel.type === 'youtube') && (
+                    {(!channel.type || channel.type === 'youtube' || channel.type === 'channel' || channel.type === 'playlist') && (
                       <button
                         onClick={() => handleDownload(channel.id)}
                         disabled={downloadingChannels.has(channel.id)}
                         className="btn-download"
                       >
-                        {downloadingChannels.has(channel.id) ? 'Downloading...' : 'Download'}
+                        {downloadingChannels.has(channel.id) ? '다운로드 중...' : '다운로드'}
                       </button>
                     )}
                     <button onClick={() => copyRssUrl(channel.id)} className="btn-rss">
-                      Copy RSS
+                      RSS 복사
                     </button>
                     <button onClick={() => handleDeleteChannel(channel.id, channel.title)} className="btn-delete">
-                      Delete
+                      삭제
                     </button>
                   </div>
                   <div className="rss-link">
