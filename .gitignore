@@ -1,5 +1,4 @@
 storage
-bin
 channels.json
 download-result.json
 temp_podbbang.json
@@ -8,3 +7,7 @@ temp_podbbang.json
 .env.local
 node_modules
 .vercel
+
+bin/ffmpeg.exe
+bin/ffplay.exe
+bin/ffprobe.exe
