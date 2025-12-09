@@ -37,7 +37,7 @@ app.get('/api/channels', async (req, res) => {
 });
 
 app.post('/api/channel', async (req, res) => {
-  const { channelUrl, limit = 10 } = req.body;
+  const { channelUrl, limit = 0 } = req.body; // 기본값 0 = 전체
 
   if (!channelUrl) {
     return res.status(400).json({ error: 'channelUrl is required' });
@@ -45,19 +45,30 @@ app.post('/api/channel', async (req, res) => {
 
   try {
     const channelInfo = await getChannelInfo(channelUrl);
-    const videos = await getChannelVideos(channelUrl, limit);
+    const videos = await getChannelVideos(channelUrl, limit); // Shorts 제외, 전체 가져오기
 
     if (videos.length === 0) {
       return res.status(404).json({ error: 'No videos found' });
     }
 
+    // 플레이리스트인 경우 ID 앞에 'playlist_' 접두사 추가
+    const channelId = channelInfo.type === 'playlist'
+      ? `playlist_${channelInfo.id}`
+      : channelInfo.id;
+
     const channel = await channelDB.addChannel({
-      id: channelInfo.id,
+      id: channelId,
       title: channelInfo.title,
-      url: channelUrl
+      url: channelUrl,
+      description: channelInfo.description || '',
+      thumbnail: channelInfo.thumbnail || '',
+      type: channelInfo.type || 'channel',
+      originalId: channelInfo.id,
+      channelId: channelInfo.channelId,
+      channelName: channelInfo.channelName
     });
 
-    await channelDB.updateChannelVideos(channelInfo.id, videos);
+    await channelDB.updateChannelVideos(channelId, videos);
 
     res.json({
       success: true,
