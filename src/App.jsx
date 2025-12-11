@@ -19,7 +19,7 @@ function App() {
   async function loadChannels() {
     try {
       const data = await getChannels()
-      setChannels(data)
+      setChannels(Array.isArray(data) ? data : (data.channels || []))
     } catch (err) {
       console.error('Failed to load channels:', err)
     }

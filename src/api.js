@@ -6,7 +6,7 @@ export async function getChannels() {
 }
 
 export async function addYouTubeChannel(url) {
-  const response = await fetch('/youtube/process', {
+  const response = await fetch(`${API_BASE}/process`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
