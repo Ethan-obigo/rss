@@ -50,5 +50,5 @@ export async function addSpotifyShow(showUrl) {
 }
 
 export function getRssUrl(channelId) {
-  return `${API_BASE}//rss/${channelId}`;
+  return `${API_BASE}/rss/${channelId}`;
 }
