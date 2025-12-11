@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export async function getChannels() {
   const response = await fetch(`${API_BASE}/channels`);
@@ -6,7 +6,7 @@ export async function getChannels() {
 }
 
 export async function addYouTubeChannel(url) {
-  const response = await fetch(`${API_BASE}/process`, {
+  const response = await fetch(`${API_BASE}/youtube/process`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -50,5 +50,5 @@ export async function addSpotifyShow(showUrl) {
 }
 
 export function getRssUrl(channelId) {
-  return `${window.location.origin}/rss/${channelId}`;
+  return `${API_BASE}//rss/${channelId}`;
 }
