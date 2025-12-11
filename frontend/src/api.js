@@ -2,23 +2,17 @@ const API_BASE = '/api';
 
 export async function getChannels() {
   const response = await fetch(`${API_BASE}/channels`);
-  const data = await response.json();
-  return data.channels;
+  return response.json();
 }
 
-export async function addChannel(channelUrl, limit = 10) {
-  const response = await fetch(`${API_BASE}/channel`, {
+export async function addYouTubeChannel(url) {
+  const response = await fetch('/youtube/process', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ channelUrl, limit }),
+    body: JSON.stringify({ url }),
   });
-  return response.json();
-}
-
-export async function downloadChannel(channelId) {
-  const response = await fetch(`${API_BASE}/download/${channelId}`);
   return response.json();
 }
 
@@ -41,12 +35,16 @@ export async function addPodbbangChannel(channelId) {
 }
 
 export async function addSpotifyShow(showUrl) {
+  // showUrl에서 showId 추출
+  const showIdMatch = showUrl.match(/show\/([a-zA-Z0-9]+)/);
+  const showId = showIdMatch ? showIdMatch[1] : showUrl;
+
   const response = await fetch(`${API_BASE}/spotify/show`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ showUrl }),
+    body: JSON.stringify({ showId }),
   });
   return response.json();
 }

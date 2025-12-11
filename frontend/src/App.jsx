@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { getChannels, addChannel, addPodbbangChannel, addSpotifyShow, downloadChannel, deleteChannel, getRssUrl } from './api'
+import { getChannels, addYouTubeChannel, addPodbbangChannel, addSpotifyShow, deleteChannel, getRssUrl } from './api'
 
 function App() {
   const [channels, setChannels] = useState([])
   const [channelUrl, setChannelUrl] = useState('')
   const [podbbangId, setPodbbangId] = useState('')
   const [spotifyUrl, setSpotifyUrl] = useState('')
-  const limit = 0 // 전체 영상 가져오기
   const [loading, setLoading] = useState(false)
   const [youtubeError, setYoutubeError] = useState('')
   const [podbbangError, setPodbbangError] = useState('')
   const [spotifyError, setSpotifyError] = useState('')
-  const [downloadingChannels, setDownloadingChannels] = useState(new Set())
 
   useEffect(() => {
     loadChannels()
@@ -33,10 +31,11 @@ function App() {
     setYoutubeError('')
 
     try {
-      const result = await addChannel(channelUrl, limit)
-      if (result.success) {
+      const result = await addYouTubeChannel(channelUrl)
+      if (result.rssUrl) {
         await loadChannels()
         setChannelUrl('')
+        alert(`채널이 추가되었습니다.\nRSS URL: ${result.rssUrl}`)
       } else {
         setYoutubeError(result.error || '채널 추가 실패')
       }
@@ -72,9 +71,10 @@ function App() {
       }
 
       const result = await addPodbbangChannel(channelId)
-      if (result.success) {
+      if (result.rssUrl) {
         await loadChannels()
         setPodbbangId('')
+        alert(`채널이 추가되었습니다.\nRSS URL: ${result.rssUrl}`)
       } else {
         setPodbbangError(result.error || '팟빵 채널 추가 실패')
       }
@@ -92,9 +92,10 @@ function App() {
 
     try {
       const result = await addSpotifyShow(spotifyUrl)
-      if (result.success) {
+      if (result.rssUrl) {
         await loadChannels()
         setSpotifyUrl('')
+        alert(`채널이 추가되었습니다.\nRSS URL: ${result.rssUrl}`)
       } else {
         setSpotifyError(result.error || 'Spotify 쇼 추가 실패')
       }
@@ -102,28 +103,6 @@ function App() {
       setSpotifyError(err.message || 'Spotify 쇼 추가 실패')
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function handleDownload(channelId) {
-    setDownloadingChannels(prev => new Set(prev).add(channelId))
-
-    try {
-      const result = await downloadChannel(channelId)
-      if (result.success) {
-        alert(`${result.downloaded}개 영상 다운로드 완료`)
-        await loadChannels()
-      } else {
-        alert('다운로드 실패: ' + (result.error || '알 수 없는 오류'))
-      }
-    } catch (err) {
-      alert('다운로드 실패: ' + err.message)
-    } finally {
-      setDownloadingChannels(prev => {
-        const next = new Set(prev)
-        next.delete(channelId)
-        return next
-      })
     }
   }
 
@@ -175,7 +154,7 @@ function App() {
               </button>
             </div>
           </form>
-          <p className="notice">※ 현재 배포 환경에서는 미지원됩니다.</p>
+          <p className="notice">※ 오디오 추출 및 R2 업로드가 자동으로 진행됩니다. 시간이 소요될 수 있습니다.</p>
           {youtubeError && <div className="error">{youtubeError}</div>}
         </section>
 
@@ -241,15 +220,6 @@ function App() {
                     </p>
                   </div>
                   <div className="channel-actions">
-                    {(!channel.type || channel.type === 'youtube' || channel.type === 'channel' || channel.type === 'playlist') && (
-                      <button
-                        onClick={() => handleDownload(channel.id)}
-                        disabled={downloadingChannels.has(channel.id)}
-                        className="btn-download"
-                      >
-                        {downloadingChannels.has(channel.id) ? '다운로드 중...' : '다운로드'}
-                      </button>
-                    )}
                     <button onClick={() => copyRssUrl(channel.id)} className="btn-rss">
                       RSS 복사
                     </button>
