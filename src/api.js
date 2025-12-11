@@ -24,7 +24,7 @@ export async function deleteChannel(channelId) {
 }
 
 export async function addPodbbangChannel(channelId) {
-  const response = await fetch(`${API_BASE}/podbbang/channel`, {
+  const response = await fetch(`${API_BASE}/api/podbbang/channel`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ export async function addSpotifyShow(showUrl) {
   const showIdMatch = showUrl.match(/show\/([a-zA-Z0-9]+)/);
   const showId = showIdMatch ? showIdMatch[1] : showUrl;
 
-  const response = await fetch(`${API_BASE}/spotify/show`, {
+  const response = await fetch(`${API_BASE}/api/spotify/show`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
