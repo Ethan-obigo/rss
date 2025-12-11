@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export async function getChannels() {
-  const response = await fetch(`${API_BASE}/channels`);
+  const response = await fetch(`${API_BASE}/api/channels`);
   return response.json();
 }
 
@@ -17,7 +17,7 @@ export async function addYouTubeChannel(url) {
 }
 
 export async function deleteChannel(channelId) {
-  const response = await fetch(`${API_BASE}/channel/${channelId}`, {
+  const response = await fetch(`${API_BASE}/api/channel/${channelId}`, {
     method: 'DELETE',
   });
   return response.json();
