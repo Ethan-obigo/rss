@@ -52,3 +52,41 @@ export async function addSpotifyShow(showUrl) {
 export function getRssUrl(channelId) {
   return `${API_BASE}/rss/${channelId}`;
 }
+
+export async function updateChannel(channelId, type) {
+  const realId = channelId.replace(/^(youtube-|podbbang_|spotify_)/, '');
+
+  let endpoint = '';
+  let options = {
+    method: 'POST',
+    headers: {}
+  };
+
+  if (type === 'podbbang') {
+    endpoint = `/api/podbbang/update/${realId}`;
+    
+  } else if (type === 'spotify') {
+    endpoint = `/api/spotify/update/${realId}`;
+    
+  } else {
+    endpoint = `/youtube/update/${realId}`;
+    
+    const youtubeUrl = realId.startsWith('PL') 
+      ? `https://www.youtube.com/playlist?list=${realId}` 
+      : `https://www.youtube.com/channel/${realId}`;
+
+    options.headers = {
+      'Content-Type': 'application/json',
+    };
+    options.body = JSON.stringify({ url: youtubeUrl });
+  }
+
+  const response = await fetch(`${API_BASE}${endpoint}`, options);
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Update failed with status: ${response.status}`);
+  }
+
+  return response.json();
+}

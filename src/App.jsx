@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { getChannels, addYouTubeChannel, addPodbbangChannel, addSpotifyShow, deleteChannel, getRssUrl } from './api'
+import { getChannels, addYouTubeChannel, addPodbbangChannel, addSpotifyShow, deleteChannel, getRssUrl, updateChannel } from './api'
 
 function App() {
   const [channels, setChannels] = useState([])
@@ -129,6 +129,16 @@ function App() {
     }
   }
 
+  async function handleUpdate(channelId, type) {
+    try {
+      await updateChannel(channelId, type);
+      await loadChannels();
+    } catch (err) {
+      console.error(err);
+      alert('업데이트 실패');
+    }
+  }
+
   return (
     <div className="app">
       <header>
@@ -225,6 +235,9 @@ function App() {
                     </button>
                     <button onClick={() => handleDeleteChannel(channel.id, channel.title)} className="btn-delete">
                       삭제
+                    </button>
+                    <button onClick={() => handleUpdate(channel.id, channel.type)}>
+                      업데이트
                     </button>
                   </div>
                   <div className="rss-link">
