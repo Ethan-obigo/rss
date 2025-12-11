@@ -1,8 +1,0 @@
-node_modules
-.env.local
-storage
-bin
-channels.json
-download-result.json
-temp_podbbang.json
-.claude

@@ -1,38 +1,37 @@
 {
-  "name": "yt-rss-maker",
+  "name": "yt-rss-maker-frontend",
+  "private": true,
   "version": "1.0.0",
-  "description": "YouTube to RSS feed converter with audio extraction",
-  "main": "server.js",
+  "description": "RSS feed maker frontend - YouTube, Podbbang, Spotify to RSS",
   "type": "module",
   "scripts": {
-    "start": "node --no-warnings start.js",
-    "dev": "concurrently \"node start.js\" \"cd frontend && npm run dev\"",
-    "server": "node start.js",
-    "frontend": "cd frontend && npm run dev",
-    "build": "cd frontend && npm install && npm run build",
-    "vercel-build": "npm run build"
+    "dev": "npx vite",
+    "build": "npx vite build",
+    "lint": "npx eslint .",
+    "preview": "npx vite preview"
   },
   "keywords": [
-    "youtube",
     "rss",
     "podcast",
-    "audio"
+    "youtube",
+    "podbbang",
+    "spotify"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@distube/yt-dlp": "^2.0.1",
-    "@supabase/supabase-js": "^2.81.1",
-    "axios": "^1.13.2",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "node-cron": "^4.2.1",
-    "podcast": "^2.0.1",
-    "rss": "^1.2.2",
-    "yt-dlp-wrap": "^2.3.12"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.2.6"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "@eslint/js": "^9.39.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0"
   }
 }
