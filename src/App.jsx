@@ -92,22 +92,22 @@ function App() {
 
     try {
       const result = await addSpotifyShow(spotifyUrl)
-      if (result.rssUrl) {
+      if (result.feedUrl) {
         await loadChannels()
         setSpotifyUrl('')
-        alert(`채널이 추가되었습니다.\nRSS URL: ${result.rssUrl}`)
+        alert(`채널이 추가되었습니다.\nRSS URL: ${result.feedUrl}`)
       } else {
-        setSpotifyError(result.error || 'Spotify 쇼 추가 실패')
+        setSpotifyError(result.error || 'Apple Podcasts에서 RSS 피드를 찾을 수 없습니다')
       }
     } catch (err) {
-      setSpotifyError(err.message || 'Spotify 쇼 추가 실패')
+      setSpotifyError(err.message || 'Apple Podcasts에서 RSS 피드를 찾을 수 없습니다')
     } finally {
       setLoading(false)
     }
   }
 
-  function copyRssUrl(channelId) {
-    const url = getRssUrl(channelId)
+  function copyRssUrl(channel) {
+    const url = channel.externalRssUrl || getRssUrl(channel.id)
     navigator.clipboard.writeText(url)
     alert('RSS URL이 복사되었습니다')
   }
@@ -189,7 +189,7 @@ function App() {
         </section>
 
         <section className="add-channel">
-          <h2>Spotify 쇼 추가</h2>
+          <h2>Spotify RSS 찾기</h2>
           <form onSubmit={handleAddSpotify}>
             <div className="form-group">
               <input
@@ -201,10 +201,11 @@ function App() {
                 disabled={loading}
               />
               <button type="submit" disabled={loading}>
-                {loading ? '추가 중...' : '추가'}
+                {loading ? 'RSS 검색 중...' : 'RSS 찾기'}
               </button>
             </div>
           </form>
+          <p className="notice">※ Spotify 쇼 이름으로 Apple Podcasts에서 RSS 피드를 검색합니다.</p>
           {spotifyError && <div className="error">{spotifyError}</div>}
         </section>
 
@@ -230,7 +231,7 @@ function App() {
                     </p>
                   </div>
                   <div className="channel-actions">
-                    <button onClick={() => copyRssUrl(channel.id)} className="btn-rss">
+                    <button onClick={() => copyRssUrl(channel)} className="btn-rss">
                       RSS 복사
                     </button>
                     <button onClick={() => handleDeleteChannel(channel.id, channel.title)} className="btn-delete">
@@ -241,7 +242,7 @@ function App() {
                     </button>
                   </div>
                   <div className="rss-link">
-                    <code>{getRssUrl(channel.id)}</code>
+                    <code>{channel.externalRssUrl || getRssUrl(channel.id)}</code>
                   </div>
                 </div>
               ))}

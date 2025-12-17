@@ -35,17 +35,19 @@ export async function addPodbbangChannel(channelId) {
 }
 
 export async function addSpotifyShow(showUrl) {
-  // showUrl에서 showId 추출
-  const showIdMatch = showUrl.match(/show\/([a-zA-Z0-9]+)/);
-  const showId = showIdMatch ? showIdMatch[1] : showUrl;
-
-  const response = await fetch(`${API_BASE}/api/spotify/show`, {
+  const response = await fetch(`${API_BASE}/api/spotify/find-rss`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ showId }),
+    body: JSON.stringify({ spotifyUrl: showUrl }),
   });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'RSS feed not found on Apple Podcasts');
+  }
+
   return response.json();
 }
 
