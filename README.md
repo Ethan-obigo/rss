@@ -10,8 +10,8 @@ YouTube, 팟빵, Spotify를 RSS 피드로 변환하는 웹 애플리케이션의
 
 ## 기술 스택
 
-- **프론트엔드**: React 18 + Vite
-- **백엔드**: NestJS (별도 리포지토리)
+- **프론트엔드**: React 19 + Vite
+- **백엔드**: NestJS (별도 레포지토리)
 - **스타일링**: CSS
 
 ## 개발 환경 설정
@@ -54,27 +54,3 @@ yt-rss-maker/
 ├── package.json
 └── README.md
 ```
-
-## API 엔드포인트
-
-백엔드 API 문서는 NestJS 리포지토리를 참조하세요.
-
-### YouTube
-- `POST /youtube/process` - URL 처리 및 RSS 생성
-
-### 팟빵
-- `POST /api/podbbang/channel` - 채널 추가
-- `POST /api/podbbang/update/:channelId` - 채널 업데이트
-
-### Spotify
-- `POST /api/spotify/show` - 쇼 추가
-- `POST /api/spotify/update/:showId` - 쇼 업데이트
-
-### 공통
-- `GET /api/channels` - 전체 채널 목록
-- `DELETE /api/channel/:channelId` - 채널 삭제
-- `GET /rss/:channelId` - RSS 피드 XML
-
-## 라이선스
-
-ISC

@@ -1,257 +1,27 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import { getChannels, addYouTubeChannel, addPodbbangChannel, addSpotifyShow, deleteChannel, getRssUrl, updateChannel } from './api'
+import './App.css';
+import { ChannelProvider } from './context/ChannelContext.jsx';
+import YoutubeChannel from './feature/YoutubeChannel.jsx';
+import PodbbangChannel from './feature/PodbbangChannel.jsx';
+import SpotifyChannel from './feature/SpotifyChannel.jsx';
+import ChannelCard from './feature/ChannelCard.jsx';
 
 function App() {
-  const [channels, setChannels] = useState([])
-  const [channelUrl, setChannelUrl] = useState('')
-  const [podbbangId, setPodbbangId] = useState('')
-  const [spotifyUrl, setSpotifyUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [youtubeError, setYoutubeError] = useState('')
-  const [podbbangError, setPodbbangError] = useState('')
-  const [spotifyError, setSpotifyError] = useState('')
-
-  useEffect(() => {
-    loadChannels()
-  }, [])
-
-  async function loadChannels() {
-    try {
-      const data = await getChannels()
-      setChannels(Array.isArray(data) ? data : (data.channels || []))
-    } catch (err) {
-      console.error('Failed to load channels:', err)
-    }
-  }
-
-  async function handleAddChannel(e) {
-    e.preventDefault()
-    setLoading(true)
-    setYoutubeError('')
-
-    try {
-      const result = await addYouTubeChannel(channelUrl)
-      if (result.rssUrl) {
-        await loadChannels()
-        setChannelUrl('')
-        alert(`채널이 추가되었습니다.\nRSS URL: ${result.rssUrl}`)
-      } else {
-        setYoutubeError(result.error || '채널 추가 실패')
-      }
-    } catch (err) {
-      setYoutubeError(err.message || '채널 추가 실패')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleAddPodbbang(e) {
-    e.preventDefault()
-    setLoading(true)
-    setPodbbangError('')
-
-    try {
-      // URL에서 채널 ID 추출 (숫자만 추출)
-      let channelId = podbbangId.trim()
-
-      // URL 형식인 경우 ID만 추출
-      const urlMatch = channelId.match(/channels\/(\d+)/)
-      if (urlMatch) {
-        channelId = urlMatch[1]
-      } else {
-        // 숫자만 남기기
-        channelId = channelId.replace(/\D/g, '')
-      }
-
-      if (!channelId) {
-        setPodbbangError('유효한 채널 ID 또는 URL을 입력해주세요')
-        setLoading(false)
-        return
-      }
-
-      const result = await addPodbbangChannel(channelId)
-      if (result.rssUrl) {
-        await loadChannels()
-        setPodbbangId('')
-        alert(`채널이 추가되었습니다.\nRSS URL: ${result.rssUrl}`)
-      } else {
-        setPodbbangError(result.error || '팟빵 채널 추가 실패')
-      }
-    } catch (err) {
-      setPodbbangError(err.message || '팟빵 채널 추가 실패')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleAddSpotify(e) {
-    e.preventDefault()
-    setLoading(true)
-    setSpotifyError('')
-
-    try {
-      const result = await addSpotifyShow(spotifyUrl)
-      if (result.feedUrl) {
-        await loadChannels()
-        setSpotifyUrl('')
-        alert(`채널이 추가되었습니다.\nRSS URL: ${result.feedUrl}`)
-      } else {
-        setSpotifyError(result.error || 'Apple Podcasts에서 RSS 피드를 찾을 수 없습니다')
-      }
-    } catch (err) {
-      setSpotifyError(err.message || 'Apple Podcasts에서 RSS 피드를 찾을 수 없습니다')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  function copyRssUrl(channel) {
-    const url = channel.externalRssUrl || getRssUrl(channel.id)
-    navigator.clipboard.writeText(url)
-    alert('RSS URL이 복사되었습니다')
-  }
-
-  async function handleDeleteChannel(channelId, channelTitle) {
-    if (!confirm(`"${channelTitle}"을(를) 삭제하시겠습니까?`)) {
-      return
-    }
-
-    try {
-      const result = await deleteChannel(channelId)
-      if (result.success) {
-        await loadChannels()
-      } else {
-        alert('삭제 실패: ' + (result.error || '알 수 없는 오류'))
-      }
-    } catch (err) {
-      alert('삭제 실패: ' + err.message)
-    }
-  }
-
-  async function handleUpdate(channelId, type) {
-    try {
-      await updateChannel(channelId, type);
-      await loadChannels();
-    } catch (err) {
-      console.error(err);
-      alert('업데이트 실패');
-    }
-  }
-
   return (
-    <div className="app">
-      <header>
-        <h1>RSS 피드 생성기</h1>
-        <p>YouTube, 팟빵, Spotify를 RSS 피드로 변환</p>
-      </header>
-
-      <main>
-        <section className="add-channel">
-          <h2>YouTube 채널/플레이리스트 추가</h2>
-          <form onSubmit={handleAddChannel}>
-            <div className="form-group">
-              <input
-                type="text"
-                placeholder="youtube.com/@채널명 또는 youtube.com/playlist?list=..."
-                value={channelUrl}
-                onChange={(e) => setChannelUrl(e.target.value)}
-                required
-                disabled={loading}
-              />
-              <button type="submit" disabled={loading}>
-                {loading ? '추가 중...' : '추가'}
-              </button>
-            </div>
-          </form>
-          <p className="notice">※ 오디오 추출 및 R2 업로드가 자동으로 진행됩니다. 시간이 소요될 수 있습니다.</p>
-          {youtubeError && <div className="error">{youtubeError}</div>}
-        </section>
-
-        <section className="add-channel">
-          <h2>팟빵 채널 추가</h2>
-          <form onSubmit={handleAddPodbbang}>
-            <div className="form-group">
-              <input
-                type="text"
-                placeholder="podbbang.com/channels/1781651 또는 채널 ID"
-                value={podbbangId}
-                onChange={(e) => setPodbbangId(e.target.value)}
-                required
-                disabled={loading}
-              />
-              <button type="submit" disabled={loading}>
-                {loading ? '추가 중...' : '추가'}
-              </button>
-            </div>
-          </form>
-          {podbbangError && <div className="error">{podbbangError}</div>}
-        </section>
-
-        <section className="add-channel">
-          <h2>Spotify RSS 찾기</h2>
-          <form onSubmit={handleAddSpotify}>
-            <div className="form-group">
-              <input
-                type="text"
-                placeholder="https://open.spotify.com/show/..."
-                value={spotifyUrl}
-                onChange={(e) => setSpotifyUrl(e.target.value)}
-                required
-                disabled={loading}
-              />
-              <button type="submit" disabled={loading}>
-                {loading ? 'RSS 검색 중...' : 'RSS 찾기'}
-              </button>
-            </div>
-          </form>
-          <p className="notice">※ Spotify 쇼 이름으로 Apple Podcasts에서 RSS 피드를 검색합니다.</p>
-          {spotifyError && <div className="error">{spotifyError}</div>}
-        </section>
-
-        <section className="channels">
-          <h2>채널 목록 ({channels.length})</h2>
-          {channels.length === 0 ? (
-            <p className="empty">아직 추가된 채널이 없습니다</p>
-          ) : (
-            <div className="channel-list">
-              {channels.map((channel) => (
-                <div key={channel.id} className="channel-card">
-                  <div className="channel-info">
-                    <h3>
-                      {channel.type === 'podbbang' && <span className="platform-badge podbbang">팟빵</span>}
-                      {channel.type === 'spotify' && <span className="platform-badge spotify">Spotify</span>}
-                      {channel.type === 'playlist' && <span className="platform-badge youtube">플레이리스트</span>}
-                      {(!channel.type || channel.type === 'youtube' || channel.type === 'channel') && <span className="platform-badge youtube">YouTube</span>}
-                      {channel.title}
-                    </h3>
-                    <p className="channel-url">{channel.url}</p>
-                    <p className="channel-meta">
-                      {channel.videos.length}개 에피소드 · {new Date(channel.addedAt).toLocaleDateString('ko-KR')} 추가
-                    </p>
-                  </div>
-                  <div className="channel-actions">
-                    <button onClick={() => copyRssUrl(channel)} className="btn-rss">
-                      RSS 복사
-                    </button>
-                    <button onClick={() => handleDeleteChannel(channel.id, channel.title)} className="btn-delete">
-                      삭제
-                    </button>
-                    <button onClick={() => handleUpdate(channel.id, channel.type)}>
-                      업데이트
-                    </button>
-                  </div>
-                  <div className="rss-link">
-                    <code>{channel.externalRssUrl || getRssUrl(channel.id)}</code>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </main>
-    </div>
-  )
+    <ChannelProvider>
+      <div className='app'>
+        <header>
+          <h1>RSS 피드 생성기</h1>
+          <p>YouTube, 팟빵, Spotify를 RSS 피드로 변환</p>
+        </header>
+        <main>
+          <YoutubeChannel />
+          <PodbbangChannel />
+          <SpotifyChannel />
+          <ChannelCard />
+        </main>
+      </div>
+    </ChannelProvider>
+  );
 }
 
-export default App
+export default App;
